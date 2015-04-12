@@ -1,0 +1,46 @@
+<?php
+
+/**
+ * @file
+ * Quiz integration with Kalvi.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function kalvi_quiz_install() {
+
+  // a placeholder session of type "quiz".
+  // The relation with quiz is defined by a separate
+  //  relation type created below.
+  if(!in_array("quiz", array_keys(field_info_bundles('session')))) {
+    $bundle = new stdClass();
+    $bundle->type = 'quiz';
+    $bundle->label = t('Quiz');
+    $bundle->is_new = true;
+    $bundle->description = t("Quiz.");
+    $bundle->class = 'QuizSession';
+    $controller = new SessionTypeController('session_type');
+    $controller->save($bundle);
+  }
+
+  // create session-quiz relation. It is a relation instead of
+  // a simple entity reference as it can be made fieldable.
+  // Ex: is_quiz_taken_for_credits, quiz_weightage etc.
+  $session_quiz = array(
+      'relation_type' => 'session_quiz',
+      'label' => t('Session Quiz'),
+      'source_bundles' => array('session:quiz'),
+      'target_bundles' => array('node:quiz'),
+      'r_unique' => FALSE,
+      'directional' => TRUE,
+      'transitive' => FALSE,
+      'max_arity' => 2,
+      'min_arity' => 2,
+  );
+
+  if(!relation_type_load($session_quiz['relation_type'])) {
+    relation_type_save($session_quiz);
+  }
+  entity_info_cache_clear();
+}

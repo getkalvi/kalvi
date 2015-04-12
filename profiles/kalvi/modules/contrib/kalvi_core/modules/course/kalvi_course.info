@@ -1,0 +1,20 @@
+name = course
+description = course entity for Kalvi LMS
+package = Kalvi
+core = 7.x
+
+dependencies[] = kalvi_core
+
+files[] = course.admin.inc
+files[] = course_type.admin.inc
+files[] = views/course_handler_link_field.inc
+files[] = views/course_handler_delete_link_field.inc
+files[] = views/course_handler_edit_link_field.inc
+files[] = views/course_handler_course_operations_field.inc
+
+; Information added by Drupal.org packaging script on 2015-01-11
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "kalvi_core"
+datestamp = "1420938183"
+

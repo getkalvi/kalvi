@@ -1,0 +1,209 @@
+<?php
+
+/*
+  TODO:
+  1. add organized menu for kalvi related operations.
+  2. provide student, staff and kalvi admin roles
+  3. create enrollment, course session relations.
+  4. views for providing a list of sessions for a course + corresponding theme
+  5. enrollment operations
+  6. new course bundles and session bundles.
+
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function kalvi_core_menu() {
+
+  $items = array();
+
+  $items['admin/kalvi'] = array(
+      'title' => 'Kalvi',
+      'description' => 'Kalvi related settings.',
+      'page callback' => 'system_admin_menu_block_page',
+      'access arguments' => array('access administration pages'),
+      'file path' => drupal_get_path('module', 'system'),
+      'file' => 'system.admin.inc',
+  );
+
+  $items['admin/kalvi/courses'] = array(
+      'title' => 'Courses',
+      'description' => 'Manage Courses.',
+      'page callback' => 'views_embed_view',
+      'access arguments' => array('Administer courses'),
+      'page arguments' => array('courses'),
+      'file path' => drupal_get_path('module', 'views'),
+      'file' => 'views.module',
+  );
+
+  $items['admin/kalvi/sessions'] = array(
+      'title' => 'Sessions',
+      'description' => 'Manage Sessions.',
+      'page callback' => 'views_embed_view',
+      'access arguments' => array('Administer sessions'),
+      'page arguments' => array('sessions'),
+      'file path' => drupal_get_path('module', 'views'),
+      'file' => 'views.module',
+  );
+
+  $items['course/%/enroll'] = array(
+      'title' => 'Enroll',
+      'description' => 'Enroll users to this Course.',
+      'page callback' => 'drupal_get_form',
+      'access arguments' => array('Administer courses'),
+      'page arguments' => array('course_enroll_form', 1),
+      'file path' => drupal_get_path('module', 'kalvi_core'),
+      'file' => 'includes/kalvi_core.enroll.inc',
+  );
+
+  return $items;
+}
+
+
+/**
+ * Implements hook_permssion().
+ */
+function kalvi_core_permission() {
+  return array(
+    'user can enroll for a course' => array(
+      'title' => t('user can enroll for a course'),
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_views_api().
+ */
+function kalvi_core_views_api() {
+  return array(
+      'api' => 3,
+      'path' => drupal_get_path('module', 'kalvi_core') . '/views',
+  );
+}
+
+function sessions_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'session_node_form_no') {
+    kpr($form);
+    $form['field_course'] = array(
+        '#type' => 'select',
+        '#title' => t('Course'),
+        '#required' => TRUE,
+        '#description' => t('Course under which this question should be posted'),
+        '#options' => _entity_as_options('course'),
+    );
+
+    $form['submit'] = array(
+        '#type' => 'submit',
+        '#value' => t('Add Session'),
+        '#submit' => 'sessions_add_form_submit',
+    );
+  }
+}
+
+function sessions_add_form($form, $form_state) {
+  $form['title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Title'),
+      '#required' => TRUE,
+  );
+
+  $form['body'] = array(
+      '#type' => 'textarea',
+      '#rows' => 6,
+      '#title' => t('Content'),
+      '#attributes' => array('class' => array('content')),
+  );
+
+  $form['course'] = array(
+      '#type' => 'select',
+      '#title' => t('Course'),
+      '#required' => TRUE,
+      '#description' => t('Course under which this question should be posted'),
+      '#options' => _entity_as_options('course'),
+  );
+
+  $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Add Session'),
+  );
+  $form['#submit'][] = 'sessions_add_form_submit';
+  return $form;
+}
+
+function sessions_add_form_submit($form, &$form_state) {
+
+  $node = new stdClass();
+
+  $node->type = 'session';
+  node_object_prepare($node);
+  $node->title = $form_state['values']['title'];
+  $node->language = LANGUAGE_NONE;
+  $node->body[LANGUAGE_NONE]['0']['value'] = $form_state['values']['body'];
+  node_submit($node);
+  node_save($node);
+
+  //create a relation bet. this session and the selected course
+  $rel = 'sessions';
+  $endpoints = array(
+      array('entity_type' => 'course', 'entity_id' => $form_state['values']['course']),
+      array('entity_type' => 'node', 'entity_id' => $node->nid),
+  );
+  $course_session = relation_relation_exists($endpoints, $rel);
+  if (!$course_session) {
+    $course_session = relation_create($rel, $endpoints);
+    relation_save($course_session);
+  }
+}
+
+function _entity_as_options($entity_type) {
+  $entities = array();
+  $query = new EntityFieldQuery();
+  $query
+          ->entityCondition('entity_type', $entity_type, '=');
+  $result = $query->execute();
+  if(empty($result['course'])) {
+    return $entities;
+  }
+  foreach($result['course'] as $course) {
+    $entity = entity_load('course', array($course->id));
+    $entities[$entity[$course->id]->id] = $entity[$course->id]->title;
+  }
+  return $entities;
+}
+
+/**
+ * Implements hook_cron
+ */
+function kalvi_core_cron() {
+  //these functions are for exposing 'course start' and 'course end'
+  //as hooks and as events (for rules module)
+  _kalvi_course_open();
+  _kalvi_course_close();
+}
+
+function _kalvi_course_open() {
+  //TODO
+  //add course start event
+  //add course start hook
+}
+
+function _kalvi_course_close() {
+}
+
+function kalvi_core_entity_update($entity, $type) {
+}
+
+function _update_course_validity($entity) {
+}
+
+function kalvi_core_admin_paths() {
+  $paths =  array(
+      'course/*/edit' => TRUE,
+      'course/*/delete' => TRUE,
+      'session/*/edit' => TRUE,
+      'session/*/delete' => TRUE,
+  );
+  return $paths;
+}

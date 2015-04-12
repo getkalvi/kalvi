@@ -1,0 +1,95 @@
+.form-type-textarea label,
+.form-type-textfield label {
+  margin-left: 5px;
+  padding: 6px;
+  color: #eee;
+  background: #111;
+  font-weight: bold;
+  font-size: 18px;
+  font-family: $title-font;
+  letter-spacing: 1px;
+  display: inline-block;
+  width: auto;
+}
+
+textarea.form-textarea,
+input.form-text {
+  border: 2px solid #bdc3c7;
+  @include border-radius(0);
+  @include transition-property(border-color);
+  @include transition-duration(0.25s);
+  &:focus {
+      @include transition-property(border-color);
+      @include transition-duration(0.25s);
+      border-color: #111;
+  }
+}
+
+button {
+  padding: 8px;
+  background-color: #2c3e50;
+  color: #fff;
+  border: none;
+  margin-left: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  font-family: $text-font;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+select {
+  height: 25px;
+  font-size: 14px;
+}
+
+select[multiple] {
+ height: auto;
+}
+
+.form-item .description {
+  margin-top: 0.4em;
+}
+
+input[type="text"] {
+  height: 30px;
+  font-size: 14px;
+}
+
+html.js input.form-autocomplete {
+  background-position: 100% 11px;
+}
+
+.vertical-tabs ul.vertical-tabs-list li a:hover {
+  outline: none;
+  text-decoration: none;
+}
+
+.vertical-tabs ul.vertical-tabs-list li {
+  border: 2px 2px 1px 2px solid #ddd8ce;
+}
+
+.vertical-tabs ul.vertical-tabs-list li a {
+  font-family: $text-font;
+  color: #111;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 14px;
+}
+
+.vertical-tabs ul.vertical-tabs-list li.selected a {
+  border-width: 0px;
+}
+
+
+// some items like URL text fields are better off inline.
+div.form-item-path-alias div.control,
+div.form-item-site-404 div.control,
+div.form-item-site-403 div.control,
+div.form-item-site-frontpage div.control {
+  display: inline-block;
+}
+
+#relation-ui-filter-form .form-item {
+  margin-top: 1em;
+}

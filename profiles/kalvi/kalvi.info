@@ -1,0 +1,100 @@
+name = Kalvi
+description = Kickstart your e-learning
+version = 1.0
+core = 7.x
+
+base[] = panopoly
+
+;;core modules
+dependencies[] = block
+dependencies[] = comment
+dependencies[] = contextual
+dependencies[] = help
+dependencies[] = image
+dependencies[] = list
+dependencies[] = menu
+dependencies[] = number
+dependencies[] = options
+dependencies[] = path
+dependencies[] = taxonomy
+dependencies[] = dblog
+dependencies[] = search
+dependencies[] = shortcut
+dependencies[] = toolbar
+dependencies[] = field_ui
+dependencies[] = file
+dependencies[] = rdf
+
+;; contrib modules
+dependencies[] = entity
+dependencies[] = entityqueue
+dependencies[] = file_entity
+dependencies[] = jquery_update
+dependencies[] = media
+dependencies[] = media_internet
+
+;; Site building
+dependencies[] = apps
+dependencies[] = ctools
+dependencies[] = eck
+dependencies[] = features
+dependencies[] = relation
+dependencies[] = relation_ui
+dependencies[] = rules
+dependencies[] = rules_admin
+dependencies[] = strongarm
+dependencies[] = views
+dependencies[] = views_ui
+dependencies[] = views_bulk_operations
+
+;; Path
+dependencies[] = pathauto
+
+
+;; Panels stuff
+dependencies[] = panels
+dependencies[] = panelizer
+dependencies[] = panels_everywhere
+dependencies[] = panels_mini
+
+
+;; Fields
+dependencies[] = date
+dependencies[] = date_popup
+dependencies[] = entityreference
+dependencies[] = link
+
+;; i18n
+
+;; UX Enhancements
+dependencies[] = chosen
+
+; Panopoly Foundation
+dependencies[] = panopoly_core
+dependencies[] = panopoly_images
+dependencies[] = panopoly_theme
+dependencies[] = panopoly_magic
+dependencies[] = panopoly_widgets
+dependencies[] = panopoly_admin
+dependencies[] = panopoly_users
+; Panopoly Toolset
+dependencies[] = panopoly_pages
+dependencies[] = panopoly_search
+dependencies[] = panopoly_wysiwyg
+
+;; Kalvi
+dependencies[] = kalvi_core
+dependencies[] = kalvi_course
+dependencies[] = kalvi_session
+dependencies[] = kalvi_ui
+
+files[] = kalvi.profile
+
+exclusive = 1
+
+
+; Information added by drush on 2015-04-12
+version = "unknown"
+project = "kalvi"
+datestamp = "1428833401"
+

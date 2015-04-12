@@ -1,0 +1,110 @@
+<?php
+
+//TODO; kalvi_ui needs major refactoring.
+
+
+/**
+ * Implements hook_menu().
+ *
+ * TODO (lakshmi): Add documentation explaining the new menu items.
+ */
+function kalvi_ui_menu() {
+  $items = array();
+  $items['course/abc/session'] = array(
+    'title' => 'Add a new session',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('create_session_form', 1, "session"),
+    'access callback' => TRUE, //TODO: something more sensible
+  );
+  return $items;
+}
+
+
+/**
+ * Implements hook_views_api().
+ */
+function kalvi_ui_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'kalvi_ui') . '/views',
+  );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function kalvi_ui_theme() {
+  $theme = array();
+  $path = drupal_get_path('module', 'kalvi_ui') . '/theme';
+  $base = array(
+    'path' => $path,
+  );
+
+  $theme['course_outline'] = array(
+    'variables' => array(
+      'course' => NULL
+    ),
+    'template' => 'course-outline',
+  ) + $base;
+
+  $theme['session_item'] = array(
+    'variables' => array(
+      'session' => NULL
+    ),
+    'template' => 'session-item',
+  ) + $base;
+
+  return $theme;
+}
+
+function template_preprocess_course_outline(&$variables) {
+  $sessions = session_load_multiple(get_course_sessions($variables['course']->course_id));
+  $variables['sessions'] = '<ul>';
+  foreach($sessions as $session) {
+    $variables['sessions'] .= '<li>' . theme('session_item', array('session' => $session)) . '</li>';
+  }
+  $variables['sessions'] .= '</ul>';
+}
+
+function template_preprocess_session_item(&$variables) {
+  $session = $variables['session'];
+  $variables['completion_status'] = get_session_completion_status($session->session_id);
+  $variables['session_link'] = l($session->name, $session->url());
+}
+
+
+/**
+ * Implements template_preprocess_entity().
+ *
+ * Runs a entity specific preprocess function, if it exists.
+ */
+function kalvi_ui_preprocess_entity(&$variables) {
+  $function = __FUNCTION__ . '_' . $variables['entity_type'];
+  if (function_exists($function)) {
+    $function($variables);
+  }
+}
+
+function kalvi_ui_preprocess_entity_course(&$variables) {
+  $variables['content']['course_outline']['#markup'] = theme('course_outline', array('course' => $variables['course']));
+}
+
+function get_course_sessions($course_id) {
+  $query = relation_query('course', $course_id);
+  $course_sessions = $query->propertyCondition('relation_type', 'course_session')->execute();
+
+  $relations = relation_load_multiple(array_keys($course_sessions));
+  //TODO: order by weight field
+  $sessions = array();
+  foreach($relations as $course_session) {
+    $endpoints = field_get_items('relation', $course_session, 'endpoints');
+    $sessions[] = $endpoints[1]['entity_id'];
+  }
+  return $sessions;
+}
+
+function get_session_completion_status($session_id) {
+  global $user;
+  //TODO: return true if user session relation exists, else false
+  return FALSE;
+}

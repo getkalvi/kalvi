@@ -1,0 +1,82 @@
+<?php
+
+/**
+ * @file
+ * Module for Quiz integration with Kalvi
+ * and associated changes
+ */
+
+function kalvi_quiz_form_quiz_node_form_alter(&$form, $form_state) {
+  $form['course_id'] = array(
+    '#type' => 'hidden',
+  );
+
+  if (isset($_GET['course_id'])) {
+    $form['course_id']['#value'] = intval($_GET['course_id']);
+    $form['actions']['submit']['#submit'][] = 'create_quiz_session';
+  }
+}
+
+function create_quiz_session($form, &$form_state) {
+  $course_id = $form_state['values']['course_id'];
+  $quiz_title = $form_state['values']['title'];
+  $session = session_create(array('name'=> $quiz_title, 'type'=> 'quiz', 'author' => 1));
+  session_save($session);
+  add_session_to_quiz($session->session_id, $form_state['node']->vid);
+  module_load_include('inc', 'kalvi_core', 'includes/kalvi_core.enroll');
+  add_session_to_course($course_id, $session->session_id);
+}
+
+/**
+ * Adds a session to quiz
+ * @param type $session_id
+ * @param type $quiz_id quiz vid
+ * @return type relation obj bet. quiz and session
+ */
+function add_session_to_quiz($session_id, $quiz_id) {
+  $rel = 'session_quiz';
+  $endpoints = array(
+    array('entity_type' => 'session', 'entity_id' => $session_id),
+    array('entity_type' => 'node', 'entity_id' => $quiz_id),
+  );
+  $session_quiz = relation_relation_exists($endpoints, $rel);
+  if(!$session_quiz) {
+    $new_rel = relation_create($rel, $endpoints);
+    return relation_save($new_rel);
+  }
+  return $session_quiz;
+}
+
+/**
+ * The class used for quiz session type
+ */
+class QuizSession extends Session {
+
+  public function __construct($values = array()) {
+    parent::__construct($values, 'session');
+  }
+
+  protected function defaultLabel() {
+    return $this->name;
+  }
+
+  public function url() {
+    $quiz = get_session_quiz($this->session_id);
+    return 'node/' . $quiz;
+  }
+}
+
+function get_session_quiz($session_id) {
+  $query = relation_query('session', $session_id);
+  $session_quizzes = $query->propertyCondition('relation_type', 'session_quiz')->execute();
+
+  $relations = relation_load_multiple(array_keys($session_quizzes));
+
+  $session_quiz = reset($relations);
+  $endpoints = field_get_items('relation', $session_quiz, 'endpoints');
+  $quiz = $endpoints[1]['entity_id'];
+  return $quiz;
+}
+
+
+// TODO: on node save of quiz, check if quiz has associated session and update.

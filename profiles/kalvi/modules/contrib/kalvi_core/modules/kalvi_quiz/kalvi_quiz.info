@@ -1,0 +1,16 @@
+name = Kalvi Quiz
+core = 7.x
+package = Kalvi
+
+version = 7.x-1.x-dev
+project = kalvi_quiz
+
+dependencies[] = kalvi_ui
+dependencies[] = quiz
+
+; Information added by Drupal.org packaging script on 2015-01-11
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "kalvi_core"
+datestamp = "1420938183"
+

@@ -1,0 +1,23 @@
+name = Kalvi Core
+core = 7.x
+package = Kalvi
+version = 7.x-1.x-dev
+project = kalvi_core
+
+dependencies[] = ctools
+dependencies[] = entity
+dependencies[] = entityreference
+dependencies[] = relation
+dependencies[] = relation_endpoint
+dependencies[] = text
+dependencies[] = rules
+
+files[] = includes/kalvi_core.enroll.inc
+files[] = kalvi_core.test
+
+; Information added by Drupal.org packaging script on 2015-01-11
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "kalvi_core"
+datestamp = "1420938183"
+

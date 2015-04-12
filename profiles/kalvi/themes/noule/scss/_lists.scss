@@ -1,0 +1,75 @@
+ul.admin-list {
+  @inlcude no-bullets;
+  padding: 20px;
+}
+
+ul.admin-list li {
+  margin-bottom: 20px;
+  background-color: #fef9c7;
+  @include no-bullet;
+}
+
+#main > ul.admin-list li {
+  @include gallery(6 of 12);
+}
+
+div.content > ul.admin-list li {
+  @include gallery(6 of 12);
+}
+
+ul.admin-list li .description {
+    padding: 10px;
+    font-size: 14px;
+    line-height: 16px;
+}
+
+ul.admin-list li a.title {
+  text-transform: uppercase;
+  background-color: #f9ec6e;
+  font-weight: bold;
+  color: #111;
+  padding: 2px 6px;
+  position: relative;
+  top: 2px;
+}
+
+.admin-panel ul.admin-list {
+  margin-left: 0px;
+}
+
+/* Action links */
+/* ------------ */
+ul.action-links {
+  margin-left: 30px;
+  li {
+    margin-bottom: 0.5em;
+  }
+  a {
+    font-weight: bold;
+    color: #111;
+    margin-left: 5px;
+    &:hover {
+      border-bottom: 1px dotted #111;
+    }
+  }
+}
+
+/* Node type add list */
+/* ------------------ */
+ul.node-type-list {
+  margin-left: 30px;
+  li {
+    margin-bottom: 1.5em;
+  }
+  a {
+    font-weight: bold;
+    color: #111;
+    margin-left: 5px;
+    &:hover {
+      border-bottom: 1px dotted #111;
+    }
+  }
+  div.description {
+    margin-top: 0.5em;
+  }
+}

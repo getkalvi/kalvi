@@ -1,0 +1,500 @@
+<?php
+
+/**
+ * @file
+ * Module for the Session Entity - a starting point to create your own Entity
+ * and associated administration interface
+ */
+
+
+/**
+ * Implement hook_entity_info().
+ *
+ * We define two entities here - the actual entity that will hold our domain
+ * specific information and an entity that holds information about the different
+ * types of entities. See here: http://drupal.org/node/977380 for a discussion on this
+ * choice.
+ */
+function kalvi_session_entity_info() {
+  $return['session'] = array(
+    'label' => t('Session'),
+    // The entity class and controller class extend the classes provided by the
+    // Entity API
+    'entity class' => 'Session', // Default entity class
+    'controller class' => 'SessionController',
+    'base table' => 'kalvi_session',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+        'id' => 'session_id',
+        'bundle' => 'type',
+    ),
+    // Bundles are defined by the session types below
+    'bundles' => array(),
+    // Bundle keys tell the FieldAPI how to extract information from the bundle objects
+    'bundle keys' => array(
+      'bundle' => 'type',
+    ),
+    'label callback' => 'entity_class_label',
+    'uri callback' => 'entity_class_uri',
+    'creation callback' => 'session_create',
+    'access callback' => 'session_access',
+    'module' => 'kalvi_session',
+    // The information below is used by the SessionUIController (which extends the EntityDefaultUIController)
+    'admin ui' => array(
+      'path' => 'admin/kalvi/sessions',
+      'file' => 'session.admin.inc',
+      'controller class' => 'SessionUIController',
+      'menu wildcard' => '%session',
+    ),
+  );
+  // The entity that holds information about the entity types
+  $return['session_type'] = array(
+    'label' => t('Session Type'),
+    'entity class' => 'SessionType',
+    'controller class' => 'SessionTypeController',
+    'base table' => 'kalvi_session_type',
+    'fieldable' => FALSE,
+    'bundle of' => 'session',
+    'exportable' => TRUE,
+    'entity keys' => array(
+      'id' => 'id',
+      'name' => 'type',
+      'label' => 'label',
+    ),
+    'access callback' => 'session_type_access',
+    'module' => 'kalvi_session',
+    // Enable the entity API's admin UI.
+    'admin ui' => array(
+      'path' => 'admin/kalvi/session_types',
+      'file' => 'session_type.admin.inc',
+      'controller class' => 'SessionTypeUIController',
+    ),
+  );
+
+  return $return;
+}
+
+
+/**
+ * Implements hook_entity_info_alter().
+ *
+ * We are adding the info about the session types via a hook to avoid a recursion
+ * issue as loading the session types requires the entity info as well.
+ *
+ * @todo This needs to be improved
+ */
+function kalvi_session_entity_info_alter(&$entity_info) {
+  foreach (session_get_types() as $type => $info) {
+    $entity_info['session']['bundles'][$type] = array(
+      'label' => $info->label,
+      'entity class' => $info->class,
+      'admin' => array(
+        'path' => 'admin/kalvi/session_types/manage/%session_type',
+        'real path' => 'admin/kalvi/session_types/manage/' . $type,
+        'bundle argument' => 4,
+        'access arguments' => array('administer session types'),
+      ),
+    );
+  }
+}
+
+
+/**
+ * Implements hook_permission().
+ */
+function kalvi_session_permission() {
+  // We set up permisssions to manage entity types, manage all entities and the
+  // permissions for each individual entity
+  $permissions = array(
+    'administer session types' => array(
+      'title' => t('Administer session types'),
+      'description' => t('Create and delete fields for session types, and set their permissions.'),
+    ),
+    'administer sessions' => array(
+      'title' => t('Administer sessions'),
+      'description' => t('Edit and delete all sessions'),
+    ),
+  );
+
+  //Generate permissions per session
+  foreach (session_get_types() as $type) {
+    $type_name = check_plain($type->type);
+    $permissions += array(
+      "edit any $type_name session" => array(
+        'title' => t('%type_name: Edit any session', array('%type_name' => $type->label)),
+      ),
+      "view any $type_name session" => array(
+        'title' => t('%type_name: View any session', array('%type_name' => $type->label)),
+      ),
+    );
+  }
+  return $permissions;
+}
+
+
+/**
+* Implements hook_enable().
+*/
+function kalvi_session_enable() {
+  $bundle = new stdClass();
+  $bundle->type = 'session';
+  $bundle->label = t('Session');
+  $bundle->is_new = true;
+  $bundle->description = t("Simple session.");
+
+  $controller = new SessionTypeController('session_type');
+  $controller->save($bundle);
+}
+
+
+/**
+ * Implements hook_field_info().
+ */
+function kalvi_session_field_info() {
+  return array(
+    'credits' => array(
+      'label' => t('Credits'),
+      'description' => t('Session Credits'),
+      'instance_settings' => array('min' => '', 'max' => ''),
+      'default_widget' => 'credits',
+      'default_formatter' => 'credits',
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_instance_settings_form().
+ */
+function kalvi_session_field_instance_settings_form($field, $instance) {
+  $settings = $instance['settings'];
+
+  $form['min'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Minimum'),
+    '#default_value' => $settings['min'],
+    '#description' => t('The minimum credits to be awared for any session. Leave blank for 0 credits.'),
+    '#element_validate' => array('element_validate_number'),
+  );
+  $form['max'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum'),
+    '#default_value' => $settings['max'],
+    '#description' => t('The minimum credits to be awared for any session. Leave blank for no maximum.'),
+    '#element_validate' => array('element_validate_number'),
+  );
+  return $form;
+}
+
+/**
+ * Implements hook_field_validate().
+ *
+ * Possible error codes:
+ * - 'number_min': The value is less than the allowed minimum value.
+ * - 'number_max': The value is greater than the allowed maximum value.
+ */
+function kalvi_session_field_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
+  foreach ($items as $delta => $item) {
+    if ($item['value'] != '') {
+      if (is_numeric($instance['settings']['min']) && $item['value'] < $instance['settings']['min']) {
+        $errors[$field['field_name']][$langcode][$delta][] = array(
+          'error' => 'number_min',
+          'message' => t('%name: the value may be no less than %min.', array('%name' => $instance['label'], '%min' => $instance['settings']['min'])),
+        );
+      }
+      if (is_numeric($instance['settings']['max']) && $item['value'] > $instance['settings']['max']) {
+        $errors[$field['field_name']][$langcode][$delta][] = array(
+          'error' => 'number_max',
+          'message' => t('%name: the value may be no greater than %max.', array('%name' => $instance['label'], '%max' => $instance['settings']['max'])),
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_field_is_empty().
+ */
+function kalvi_session_field_is_empty($item, $field) {
+  if (empty($item['value']) && (string) $item['value'] !== '0') {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Implements hook_field_widget_info().
+ */
+function kalvi_session_field_widget_info() {
+  return array(
+    'credits' => array(
+      'label' => t('Text field'),
+      'field types' => array('credits'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function kalvi_session_field_formatter_info() {
+  return array(
+    'credits' => array(
+      'label' => t('Unformatted'),
+      'field types' => array('credits'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function kalvi_session_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  $value = isset($items[$delta]['value']) ? $items[$delta]['value'] : '';
+
+  $element += array(
+    '#type' => 'textfield',
+    '#default_value' => $value,
+    '#size' => 12,
+    '#maxlength' => 10,
+    // Extract the number type from the field type name for easier validation.
+    '#number_type' => str_replace('number_', '', $field['type']),
+  );
+
+  $element['#element_validate'][] = 'number_field_widget_validate';
+
+  return array('value' => $element);
+}
+
+/**
+ * Determines whether the given user has access to a session.
+ *
+ * @param $op
+ *   The operation being performed. One of 'view', 'update', 'create', 'delete'
+ *   or just 'edit' (being the same as 'create' or 'update').
+ * @param $session
+ *   Optionally a session or a session type to check access for. If nothing is
+ *   given, access for all sessions is determined.
+ * @param $account
+ *   The user to check for. Leave it to NULL to check for the global user.
+ * @return boolean
+ *   Whether access is allowed or not.
+ */
+function session_access($op, $session = NULL, $account = NULL) {
+  if (user_access('administer sessions', $account)) {
+    return TRUE;
+  }
+  if (isset($session) && $type_name = $session->type) {
+    $op = ($op == 'view') ? 'view' : 'edit';
+    if (user_access("$op any $type_name session", $account)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+
+/**
+ * Access callback for the entity API.
+ */
+function session_type_access($op, $type = NULL, $account = NULL) {
+  return user_access('administer session types', $account);
+}
+
+
+/**
+ * Gets an array of all session types, keyed by the type name.
+ *
+ * @param $type_name
+ *   If set, the type with the given name is returned.
+ * @return SessionType[]
+ *   Depending whether $type isset, an array of session types or a single one.
+ */
+function session_get_types($type_name = NULL) {
+  // entity_load will get the Entity controller for our session entity and call the load
+  // function of that object - we are loading entities by name here.
+  $types = entity_load_multiple_by_name('session_type', isset($type_name) ? array($type_name) : FALSE);
+  return isset($type_name) ? reset($types) : $types;
+}
+
+
+/**
+ * Menu argument loader; Load a session type by string.
+ *
+ * @param $type
+ *   The machine-readable name of a session type to load.
+ * @return
+ *   A session type array or FALSE if $type does not exist.
+ */
+function session_type_load($type) {
+  return session_get_types($type);
+}
+
+
+/**
+ * Fetch a session object. Make sure that the wildcard you choose
+ * in the session entity definition fits the function name here.
+ *
+ * @param $session_id
+ *   Integer specifying the session id.
+ * @param $reset
+ *   A boolean indicating that the internal cache should be reset.
+ * @return
+ *   A fully-loaded $session object or FALSE if it cannot be loaded.
+ *
+ * @see session_load_multiple()
+ */
+function session_load($session_id, $reset = FALSE) {
+  $sessions = session_load_multiple(array($session_id), array(), $reset);
+  return reset($sessions);
+}
+
+
+/**
+ * Load multiple sessions based on certain conditions.
+ *
+ * @param $session_ids
+ *   An array of session IDs.
+ * @param $conditions
+ *   An array of conditions to match against the {session} table.
+ * @param $reset
+ *   A boolean indicating that the internal cache should be reset.
+ * @return
+ *   An array of session objects, indexed by session_id.
+ *
+ * @see entity_load()
+ * @see session_load()
+ */
+function session_load_multiple($session_ids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('session', $session_ids, $conditions, $reset);
+}
+
+
+/**
+ * Deletes a session.
+ */
+function session_delete(Session $session) {
+  $session->delete();
+}
+
+
+/**
+ * Delete multiple sessions.
+ *
+ * @param $session_ids
+ *   An array of session IDs.
+ */
+function session_delete_multiple(array $session_ids) {
+  entity_get_controller('session')->delete($session_ids);
+}
+
+
+/**
+ * Create a session object.
+ */
+function session_create($values = array()) {
+  return entity_get_controller('session')->create($values);
+}
+
+
+/**
+ * Saves a session to the database.
+ *
+ * @param $session
+ *   The session object.
+ */
+function session_save(Session $session) {
+  return entity_get_controller('session')->save($session);
+}
+
+
+/**
+ * Saves a session type to the db.
+ */
+function session_type_save(SessionType $type) {
+  $type->save();
+}
+
+
+/**
+ * Deletes a session type from the db.
+ */
+function session_type_delete(SessionType $type) {
+  $type->delete();
+}
+
+
+/**
+ * URI callback for sessions
+ */
+function session_uri(Session $session){
+  return array(
+    'path' => 'session/' . $session->session_id,
+  );
+}
+
+
+/**
+ * Menu title callback for showing individual entities
+ */
+function session_page_title(Session $session){
+  return $session->name;
+}
+
+
+/**
+ * Sets up content to show an individual session
+ * @todo - get rid of drupal_set_title();
+ */
+function session_page_view($session, $view_mode = 'full') {
+  $controller = entity_get_controller('session');
+  $content = $controller->view(array($session->session_id => $session));
+  drupal_set_title($session->name);
+  return $content;
+}
+
+
+
+/**
+ * Implements hook_views_api().
+ */
+function kalvi_session_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'kalvi_session') . '/views',
+  );
+}
+
+
+
+/**
+ * Implement hook_theme().
+ */
+function kalvi_session_theme() {
+  return array(
+    'session_add_list' => array(
+      'variables' => array('content' => array()),
+      'file' => 'session.admin.inc',
+    ),
+    'session' => array(
+      'render element' => 'elements',
+      'template' => 'session',
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ */
+function kalvi_session_menu_local_tasks_alter(&$data, $router_item, $root_path) {
+  // Add action link 'admin/kalvi/sessions/add' on 'admin/kalvi/sessions'.
+  if ($root_path == 'admin/kalvi/sessions') {
+    $item = menu_get_item('admin/kalvi/sessions/add');
+    if ($item['access']) {
+      $data['actions']['output'][] = array(
+        '#theme' => 'menu_local_action',
+        '#link' => $item,
+      );
+    }
+  }
+}

@@ -1,0 +1,161 @@
+<?php
+
+/**
+ * @file
+ * Sets up the base table for our entity and a table to store information about
+ * the entity types.
+ */
+
+
+/**
+ * Implements hook_schema().
+ */
+function kalvi_course_schema() {
+  $schema = array();
+
+  $schema['kalvi_course'] = array(
+    'description' => 'The base table for course entities.',
+    'fields' => array(
+      'course_id' => array(
+        'description' => 'Primary Key: Identifier for a course.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'The {kalvi_course_type}.type of this course.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'language' => array(
+        'description' => 'The language of the course.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'name' => array(
+        'description' => 'The name of the course - a human-readable identifier.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the course was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the course was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'author' => array(
+        'description' => 'The {users}.uid that owns this course; initially, this is the user that created it.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('course_id'),
+    'indexes' => array(
+      'type' => array('type'),
+    ),
+  );
+
+  $schema['kalvi_course_type'] = array(
+    'description' => 'Stores information about defined course types.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique course type identifier.',
+      ),
+      'type' => array(
+        'description' => 'The machine-readable name of this course type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'label' => array(
+        'description' => 'The human-readable name of this course type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'weight' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'The weight of this course type in relation to others.',
+      ),
+    ) + entity_exportable_schema_fields(),
+    'primary key' => array('id'),
+    'unique keys' => array(
+      'type' => array('type'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_field_schema().
+ */
+function kalvi_course_field_schema($field) {
+  $columns = array();
+
+  $columns['type'] = array(
+    'description'   => 'The type of duration for a course',
+    'type'          => 'varchar',
+    'size'          => 'normal',
+    'length'        => 40,
+    'not null'      => TRUE
+  );
+
+  $columns['interval'] = array(
+    'description'   => 'The time interval window for which the course will be active',
+    'type'          => 'int',
+    'size'          => 'medium',
+    'not null'      => TRUE,
+    'default'       => 0
+  );
+
+  $columns['start_date'] = array(
+    'type' => 'datetime',
+    'mysql_type' => 'datetime',
+    'pgsql_type' => 'timestamp without time zone',
+    'sqlite_type' => 'varchar',
+    'sqlsrv_type' => 'smalldatetime',
+    'not null' => FALSE,
+    'sortable' => TRUE,
+    'views' => TRUE
+  );
+
+  $columns['end_date'] = array(
+    'type' => 'datetime',
+    'mysql_type' => 'datetime',
+    'pgsql_type' => 'timestamp without time zone',
+    'sqlite_type' => 'varchar',
+    'sqlsrv_type' => 'smalldatetime',
+    'not null' => FALSE,
+    'sortable' => TRUE,
+    'views' => TRUE
+  );
+
+  $indexes = array(
+    'type' => array('type'),
+    'interval' => array('interval'),
+  );
+  return array(
+    'columns' => $columns,
+    'indexes' => $indexes,
+  );
+}

@@ -1,0 +1,39 @@
+<?php
+
+function kalvi_apps_menu() {
+  $items[] = array();
+    if (module_exists('apps')) {
+    $items['admin/kalvi/system/apps'] = array(
+      'title' => "Apps",
+      'description' => "Manage and install apps for Kalvi",
+      'page callback' => 'kalvi_apps_apps_page',
+      'access arguments' => array('administer apps'),
+    );
+  }
+  return $items;
+}
+
+/**
+ * Implements hook_appstore_stores_info
+ *
+ * Add the kalvi_apps server
+ */
+function kalvi_apps_apps_servers_info() {
+
+  return array(
+    'kalvi' => array(
+      'title' => 'Kalvi',
+      'description' => t("Apps for Kalvi"),
+      'manifest' => 'https://dl.dropboxusercontent.com/u/50786771/production',
+    ),
+  );
+}
+
+/**
+ * Page callback for the apps page.
+ * Fetches the apps administration page from the apps module and returns it.
+ */
+function kalvi_apps_apps_page() {
+  module_load_include('inc', 'apps' ,'apps.pages');
+  return apps_install_page('kalvi');
+}

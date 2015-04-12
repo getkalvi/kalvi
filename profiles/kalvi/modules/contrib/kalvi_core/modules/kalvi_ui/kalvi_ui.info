@@ -1,0 +1,18 @@
+name = Kalvi UI
+core = 7.x
+package = Kalvi
+
+version = 7.x-1.x-dev
+project = kalvi_ui
+
+dependencies[] = kalvi_course
+dependencies[] = kalvi_session
+
+files[] = views/kalvi_ui.views.inc
+
+; Information added by Drupal.org packaging script on 2015-01-11
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "kalvi_core"
+datestamp = "1420938183"
+

@@ -1,0 +1,65 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for Kalvi.
+ */
+
+/**
+ * Implements hook_install().
+ *
+ * Perform actions to set up the site for this profile.
+ *
+ * @see system_install()
+ */
+function kalvi_install() {
+  kalvi_enable_theme_settings();
+  kalvi_setup_users();
+
+  // Set up date defaults so it doesn't yell at us anymore
+  variable_set('date_first_day', 0);
+  variable_set('date_format_long', 'l, F j, Y - H:i');
+  variable_set('date_format_medium', 'D, Y-m-d H:i');
+  variable_set('date_format_short', 'Y-m-d H:i');
+
+}
+
+function kalvi_setup_users() {
+  // Enable user picture support and set the default to a square thumbnail option.
+  variable_set('user_pictures', '1');
+  variable_set('user_picture_dimensions', '1024x1024');
+  variable_set('user_picture_file_size', '800');
+  variable_set('user_picture_style', 'thumbnail');
+
+  // Allow visitor account creation with administrative approval.
+  variable_set('user_register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL);
+}
+
+/**
+* enable themes
+*/
+function kalvi_enable_theme_settings() {
+  $theme_default = 'seven';
+  $admin_theme = 'noule';
+  theme_enable(array('omega', $theme_default, $admin_theme));
+  variable_set('theme_default', $theme_default);
+  variable_set('admin_theme', 'noule');
+  variable_set('node_admin_theme', '1');
+}
+
+/**
+ * Force-set a theme at any point during the execution of the request.
+ *
+ * Drupal doesn't give us the option to set the theme during the installation
+ * process and forces enable the maintenance theme too early in the request
+ * for us to modify it in a clean way.
+ * Taken from Commerce Kickstart installation profile.
+ */
+function _kalvi_set_theme($target_theme) {
+  if ($GLOBALS['theme'] != $target_theme) {
+    unset($GLOBALS['theme']);
+
+    drupal_static_reset();
+    $GLOBALS['conf']['maintenance_theme'] = $target_theme;
+    _drupal_maintenance_theme();
+  }
+}

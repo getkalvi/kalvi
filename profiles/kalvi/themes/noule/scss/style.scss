@@ -1,0 +1,388 @@
+@import "compass";
+@import "compass/reset";
+@import "susy";
+
+@import "font";
+@import "colors";
+@import "form";
+@import "icons";
+@import "layout";
+@import "tabs";
+@import "breadcrumb";
+@import "table";
+@import "lists";
+@import "kalvi";
+
+a {
+  text-decoration: none;
+}
+
+body {
+  background-color: #19b5fe;
+}
+
+h1 {
+  font-size: 2em;
+  margin: 0.67em 0;
+  font-weight: bold;
+  padding-left: 30px;
+  padding-right: 30px;
+}
+
+#console {
+  padding-left: 30px;
+  padding-right: 30px;
+  margin-top: 20px;
+  margin-bottom: 30px;
+}
+
+#branding {
+  color: #fff;
+  z-index: 10;
+  position: relative;
+}
+
+#page {
+  z-index: 9;
+  position: relative;
+  background-color: #fff;
+  padding-top: 0.5em;
+  padding-bottom: 3em;
+}
+
+#footer {
+  background-color: #fff;
+  border-top: 4px dotted #ccc;
+  height: 100vh;
+}
+
+.views-exposed-form .views-exposed-widget .form-submit {
+  margin-top: 0px;
+}
+
+/* Admin panels in admin/config page */
+/* ---------------------------------- */
+
+div.admin-panel {
+  box-shadow: 0 0 3px 1px rgba(0, 0, 0, 0.35);
+  margin-bottom: 20px;
+  padding: 0px;
+}
+
+div.admin-panel h3 {
+  margin:0;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background-color: #2489c5;
+  padding-left: 6px;
+  a {
+    color: #fff;
+    text-transform: uppercase;
+    font-weight: bold;
+  }
+}
+
+/* Status marker, i.e. NEW, UPDATED etc */
+/* ------------------------------------ */
+
+span.marker {
+  @include border-radius(3px);
+  background-color: #e74c3c;
+  color: #fff;
+  padding: 1px 3px 1px 3px;
+  font-size: 10px;
+}
+
+/* Status messages */
+/* --------------- */
+
+div.messages {
+    position: relative;
+    border: none;
+    margin-right: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    margin: 10px;
+    line-height: 24px;
+    &:before {
+	content: '';
+	display: block;
+	width: 20px;
+	position: absolute;
+	top: 0px;
+	right: -20px;
+	bottom: 20px;
+        background-color: inherit;
+    }
+    &:after {
+    content: '';
+    display: block;
+    right: -20px;
+    bottom: 0px;
+    position: absolute;
+    border-bottom: 20px solid transparent;
+    border-left: 20px solid #ddd;
+  }
+}
+
+div.messages a {
+  color: #111;
+  border-bottom: 1px dotted #111;
+}
+
+div.status {
+  background-image: none;
+  background-color: #2ecc71;
+  color: #fff;
+}
+
+div.warning {
+  background-image: none;
+  background-color: #f9ec6e;
+  color: #111;
+}
+
+div.error {
+  background-image: none;
+  background-color: #f64747;
+  color: #fff;
+  a {
+      color: #fff;
+      border-bottom: 1px dotted #fff;
+  }
+}
+
+/* Apps page styles. */
+/* ----------------- */
+
+#apps-list {
+  clear: none;
+  border: none;
+}
+
+#apps-list ul {
+  clear: none;
+}
+
+#apps-list ul li {
+  border: none;
+}
+
+#apps-list h2 {
+  margin-left: 10px;
+}
+
+.app-status {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  margin-left: 10px;
+}
+
+.app-teaser .app-action {
+  padding: 5px;
+  background-color: #2c3e50;
+  border: none;
+  font-size: 14px;
+  margin-left: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  background-image: none;
+  a {
+    color: #fff;
+  }
+}
+
+div.compact-link {
+  margin-top: 1em;
+  margin-bottom: 1em;
+  a {
+    color: #fff;
+    font-weight: bold;
+    padding: 5px;
+    border-radius: 5px;
+    background-color: #ef4836;
+    font-size: 12px;
+  }
+}
+
+/* updates table */
+body.page-admin-reports-updates h3 {
+  color: #fff;
+  background-color: #34495e;
+  text-transform: uppercase;
+  font-weight: bold;
+  padding: 10px;
+  font-family: $text-font;
+}
+
+table.update {
+  margin-top: 0px;
+}
+
+.update .not-current,
+.update .current {
+  padding: 3px;
+  background-color: #eee;
+  color: #111;
+  border-radius: 5px;
+  font-size: 10px;
+}
+
+.update tr.ok {
+  background-color: #2ecc71;
+  color: #fff;
+  a {
+    color: #fff;
+    border-bottom: 1px dotted #fff;
+  }
+}
+.update tr.warning .version-recommended,
+.update tr.warning {
+  background-color: #f9ec6e;
+  color: #111;
+  a {
+    color: #111;
+    border-bottom: 1px dotted #111;
+  }
+}
+
+.update .security-error,
+.update table.version-security .version-title {
+  color: #fff;
+  font-weight: bold;
+}
+
+.update tr.error .version-recommended,
+.update tr.error {
+  background-color: #f64747;
+  color: #fff;
+  a {
+    color: #fff;
+    border-bottom: 1px dotted #fff;
+  }
+}
+
+td.views-field-delete-node,
+td.views-field-edit-node {
+  text-align: center;
+  a {
+    color: #111;
+  }
+}
+
+/* Pager */
+/* ----- */
+ul.pager li.pager-item,
+ul.pager li.pager-next,
+ul.pager li.pager-last {
+  a {
+    padding: 1px 6px 1px 6px;
+    color: #fff;
+    background-color: #f64747;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+}
+
+ul.pager li.pager-ellipsis {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+/* System status report page */
+/* ------------------------- */
+table.system-status-report {
+  line-height: 18px;
+  tr {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    &:hover {
+      background-color: inherit;
+    }
+  }
+  tr.ok {
+    background-color: #2ecc71;
+    color: #fff;
+    a {
+	color: #fff;
+	border-bottom: 1px dotted #fff;
+    }
+  }
+  tr.error {
+      background-color: #f64747;
+      color: #fff;
+      a {
+	  color: #fff;
+	  border-bottom: 1px dotted #fff;
+      }
+  }
+  tr.warning {
+      background-color: #f9ec6e;
+      color: #111;
+      a {
+	  color: #111;
+	  border-bottom: 1px dotted #111;
+      }
+  }
+  tr.info {
+      background-color: #4183d7;
+      color: #fff;
+      a {
+	  color: #fff;
+	  border-bottom: 1px dotted #fff;
+      }
+  }
+}
+
+a.tabledrag-handle .handle {
+  background: none;
+  color: #111;
+  font-size: 12px;
+  padding: 5px;
+}
+
+/* views related stuff */
+/* ------------------- */
+#views-ui-preview-form .form-type-textfield label {
+  height: auto;
+}
+
+#preview-submit-wrapper {
+  margin-top: 33px;
+}
+
+div.views-edit-view a {
+  color: #111;
+}
+
+div.views-edit-view button {
+  font-size: 11px;
+  padding: 4px;
+  margin-left: 4px;
+  text-transform: none;
+}
+
+#admin-menu a,
+#toolbar a {
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+div.views-exposed-form div.views-submit-button,
+div.views-exposed-form div.views-reset-button {
+  margin-top: 8px;
+}
+
+div.help-items ul li {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+div.help-items a {
+  color: #111;
+  font-weight: bold;
+  &:hover {
+    border-bottom: 1px dotted #111;
+  }
+}

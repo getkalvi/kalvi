@@ -1,0 +1,149 @@
+<?php
+//TODO: course type and session type CRUD
+
+/**
+ * Test basic functionality of courses and sessions.
+ */
+class KalviTestCase extends DrupalWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Kalvi basic functionality',
+      'description' => 'Tests basic CRUD and editing of courses and sessions.',
+      'group' => 'Kalvi',
+    );
+  }
+
+  function setUp() {
+    $modules[] = 'kalvi_core';
+    $modules[] = 'kalvi_ui';
+    $modules[] = 'kalvi_course';
+    $modules[] = 'kalvi_session';
+    parent::setUp($modules);
+
+  }
+
+  /**
+   * Tests CRUD of course objects.
+   */
+  function testSimpleCourseCRUD() {
+    $name = $this->randomName(40);
+    $permissions[] = 'administer courses';
+    $user = $this->drupalCreateUser($permissions);
+    $course = course_create(array('name'=>$name, 'type'=> 'course', 'author' => $user->uid));
+    $fields = array('name', 'type', 'author');
+    foreach ($fields as $field) {
+      $this->assertNotNull($course->{$field}, 'course_create() instantiated the ' . check_plain($field) . ' property.');
+    }
+    $ret = course_save($course);
+    $this->assertIdentical($ret, SAVED_NEW, 'course_save() successfully saved the new course.');
+
+    $this->assertNotNull($course->course_id, 'course id property is not NULL.');
+    $this->assertNotNull($course->created, 'course created property is not NULL.');
+    $this->assertNotNull($course->changed, 'course changed property is not NULL.');
+
+    // assert if the properties are same before and after save
+    // load the saved object and assert if it is the same
+    // ensure update works
+    // changed should be equal to the timestamp
+    // delete the course object and assert it as false.
+  }
+
+  /**
+   * Tests CRUD of session objects.
+   */
+  function testSimpleSessionCRUD() {
+    $name = $this->randomName(40);
+    $permissions[] = 'administer sessions';
+    $user = $this->drupalCreateUser($permissions);
+    $session = session_create(array('name'=>$name, 'type'=> 'session', 'author' => $user->uid));
+    $fields = array('name', 'type', 'author');
+    foreach ($fields as $field) {
+      $this->assertNotNull($session->{$field}, 'session_create() instantiated the ' . check_plain($field) . ' property.');
+    }
+    $ret = session_save($session);
+    $this->assertIdentical($ret, SAVED_NEW, 'session_save() successfully saved the new session.');
+
+    $this->assertNotNull($session->session_id, 'session id property is not NULL.');
+    $this->assertNotNull($session->created, 'session created property is not NULL.');
+    $this->assertNotNull($session->changed, 'session changed property is not NULL.');
+
+    // assert if the properties are same before and after save
+    // load the saved object and assert if it is the same
+    // ensure update works
+    // changed should be equal to the timestamp
+    // delete the session object and assert it as false.
+  }
+
+  /**
+   * Tests adding sessions to a course.
+   */
+  function testCourseSessionsCreation() {
+    $name = $this->randomName(40);
+    $permissions[] = 'administer courses';
+    $permissions[] = 'administer sessions';
+    $user = $this->drupalCreateUser($permissions);
+    $course = course_create(array('name'=>$name, 'type'=> 'course', 'author' => $user->uid));
+    course_save($course);
+
+    $name = $this->randomName(40);
+    $session = session_create(array('name'=>$name, 'type'=> 'session', 'author' => $user->uid));
+    session_save($session);
+    module_load_include('inc', 'kalvi_core', 'includes/kalvi_core.enroll');
+    $ret = add_session_to_course($course->course_id, $session->session_id);
+    $course_session = relation_load($ret);
+    $this->assertEqual($course_session->relation_type, 'course_session', 'The course session relation is created.');
+    $this->assertEqual($course_session->endpoints[LANGUAGE_NONE][0]['entity_id'], $course->course_id, 'The course session course endpoint is verified.');
+    $this->assertEqual($course_session->endpoints[LANGUAGE_NONE][1]['entity_id'], $session->session_id, 'The course session session endpoint is verified.');
+  }
+
+
+  /**
+   * Tests removing sessions from a course.
+   */
+  function testCourseSessionsDeletion() {
+    $name = $this->randomName(40);
+    $permissions[] = 'administer courses';
+    $permissions[] = 'administer sessions';
+    $user = $this->drupalCreateUser($permissions);
+    $course = course_create(array('name'=>$name, 'type'=> 'course', 'author' => $user->uid));
+    course_save($course);
+
+    $name = $this->randomName(40);
+    $session = session_create(array('name'=>$name, 'type'=> 'session', 'author' => $user->uid));
+    session_save($session);
+    $ret = add_session_to_course($course->course_id, $session->session_id);
+    remove_session_from_course($course->course_id, $session->session_id);
+    $this->assertFalse(course_has_session($course->course_id, $session->session_id), 'The session has been removed from course.');
+  }
+
+  /**
+   * Tests student enrollment to a course.
+   */
+  function testStudentEnrollment() {
+    // enroll_user_to_course($course_id, $user_id)
+    $this->assert(FALSE);
+  }
+
+  /**
+   * Tests student unenrollment to a course.
+   */
+  function testStudentUnenrollment() {
+    // unenroll_user_from_course($course_id, $user_id, $check=TRUE)
+    $this->assert(FALSE);
+  }
+
+  /**
+   * Tests session completion criteria.
+   */
+  function testSessionCompletionCriteria() {
+    $this->assert(FALSE);
+  }
+
+  /**
+   * Tests course completion criteria.
+   */
+  function testCourseCompletionCriteria() {
+    $this->assert(FALSE);
+  }
+}

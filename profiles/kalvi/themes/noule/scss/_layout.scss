@@ -1,0 +1,7 @@
+#main {
+  @include container(80em);
+}
+
+#content {
+  margin-top: 1em;
+}

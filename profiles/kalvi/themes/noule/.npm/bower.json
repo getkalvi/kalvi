@@ -1,0 +1,26 @@
+{
+  "name": "noule",
+  "version": "0.0.0",
+  "homepage": "https://github.com/badri/kalvi-homepage",
+  "authors": [
+    "Lakshminp <badri.dilbert@gmail.com>"
+  ],
+  "description": "components for Noule theme",
+  "main": "css/style.css",
+  "keywords": [
+    "Drupal"
+  ],
+  "license": "GPL2",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "fontawesome": "~4.2.0",
+    "iCheck": "~1.0.2",
+    "livereload": "~2.0.8"
+  }
+}

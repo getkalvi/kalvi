@@ -1,0 +1,123 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for Kalvi UI.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function kalvi_ui_install() {
+  // create relation types.
+  $relation_types_info = array(
+    array(
+      'relation_type' => 'course_session',
+      'label' => t('Course Session'),
+      'source_bundles' => array('course:*'),
+      'target_bundles' => array('session:*'),
+      'r_unique' => FALSE,
+      'directional' => TRUE,
+      'transitive' => FALSE,
+      'max_arity' => 2,
+      'min_arity' => 2,
+    ),
+    array(
+      'relation_type' => 'enrollment',
+      'label' => t('Enrollment'),
+      'source_bundles' => array('user:user'),
+      'target_bundles' => array('course:*'),
+      'r_unique' => FALSE,
+      'directional' => TRUE,
+      'transitive' => FALSE,
+      'max_arity' => 2,
+      'min_arity' => 2,
+    ),
+  );
+
+  foreach ($relation_types_info as $relation_type_info) {
+    if(!relation_type_load($relation_type_info['relation_type'])) {
+      relation_type_save($relation_type_info);
+    }
+  }
+  entity_info_cache_clear();
+}
+
+/**
+ * Implements hook_enable()
+ */
+function kalvi_ui_enable() {
+
+  field_associate_fields('kalvi_ui');
+
+  // if already created, skip
+  if (!field_info_field('kalvi_completion')) {
+    // Create the field of type float
+    $field = array('field_name' => 'kalvi_completion', 'type' => 'number_float',);
+    $field = field_create_field($field);
+
+    // Create the instance on the 'enrollment' bundle.
+    $instance = array(
+      'field_name' => $field['field_name'],
+      'entity_type' => 'relation',
+      'bundle' => 'enrollment',
+      'label' => 'Completion',
+      'description' => 'Course completion info.',
+      'required' => TRUE,
+      'settings' => array(
+        'min' => '0',
+        'max' => '100',
+        'suffix' => '%',
+      ),
+      'widget' => array('type' => 'number'),
+      'default_value' => array(array('value' => '0')),
+      'locked' => TRUE,
+      'display' => array(
+        'default' => array('label' => 'hidden'),
+      ),
+    );
+    field_create_instance($instance);
+  }
+
+  if (!field_info_field('kalvi_session_completion_data')) {
+    // Create the field of type float
+    $field = array('field_name' => 'kalvi_session_completion_data', 'type' => 'text_long',);
+    $field = field_create_field($field);
+
+    // Create the instance on the 'enrollment' bundle.
+    $instance = array(
+      'field_name' => $field['field_name'],
+      'entity_type' => 'relation',
+      'bundle' => 'course_session',
+      'label' => 'Session Completion Data',
+      'description' => 'Data about users and sessions.',
+      'settings' => array(),
+      'widget' => array('type' => 'text_textarea'),
+      'locked' => TRUE,
+      'display' => array(
+        'default' => array(
+          'label' => 'hidden',
+          'format' => 'hidden',
+        ),
+      ),
+    );
+    field_create_instance($instance);
+  }
+
+  if (!field_info_field('session_weight')) {
+    $field = array(
+      'field_name' => 'field_session_weight' ,
+      'type' => 'number_integer',
+    );
+    field_create_field($field);
+    $instance = array(
+      'label' => 'Session Weight',
+      'field_name' => $field['field_name'],
+      'entity_type' => 'relation',
+      'bundle' => 'course_session',
+      'default_value' => array(array('value' => '0')),
+    );
+    field_create_instance($instance);
+  }
+
+}

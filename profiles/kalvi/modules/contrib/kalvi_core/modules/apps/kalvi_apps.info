@@ -1,0 +1,14 @@
+name = Kalvi Apps
+description = Access apps from Kalvi Market
+
+version = 7.x-1.x-dev
+core = 7.x
+
+dependencies[] = apps
+
+; Information added by Drupal.org packaging script on 2015-01-11
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "kalvi_core"
+datestamp = "1420938183"
+

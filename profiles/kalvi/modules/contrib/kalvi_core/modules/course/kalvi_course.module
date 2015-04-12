@@ -1,0 +1,689 @@
+<?php
+
+/**
+ * @file
+ * Module for the Course Entity - a starting point to create your own Entity
+ * and associated administration interface
+ */
+
+
+/**
+ * Implement hook_entity_info().
+ *
+ * We define two entities here - the actual entity that will hold our domain
+ * specific information and an entity that holds information about the different
+ * types of entities. See here: http://drupal.org/node/977380 for a discussion on this
+ * choice.
+ */
+function kalvi_course_entity_info() {
+  $return['course'] = array(
+    'label' => t('Course'),
+    // The entity class and controller class extend the classes provided by the
+    // Entity API
+    'entity class' => 'Course',
+    'controller class' => 'CourseController',
+    'base table' => 'kalvi_course',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+        'id' => 'course_id',
+        'bundle' => 'type',
+    ),
+    // Bundles are defined by the course types below
+    'bundles' => array(),
+    // Bundle keys tell the FieldAPI how to extract information from the bundle objects
+    'bundle keys' => array(
+      'bundle' => 'type',
+    ),
+    'label callback' => 'entity_class_label',
+    'uri callback' => 'entity_class_uri',
+    'creation callback' => 'course_create',
+    'access callback' => 'course_access',
+    'module' => 'kalvi_course',
+    // The information below is used by the CourseUIController (which extends the EntityDefaultUIController)
+    'admin ui' => array(
+      'path' => 'admin/kalvi/courses',
+      'file' => 'course.admin.inc',
+      'controller class' => 'CourseUIController',
+      'menu wildcard' => '%course',
+    ),
+  );
+  // The entity that holds information about the entity types
+  $return['course_type'] = array(
+    'label' => t('Course Type'),
+    'entity class' => 'CourseType',
+    'controller class' => 'CourseTypeController',
+    'base table' => 'kalvi_course_type',
+    'fieldable' => FALSE,
+    'bundle of' => 'course',
+    'exportable' => TRUE,
+    'entity keys' => array(
+      'id' => 'id',
+      'name' => 'type',
+      'label' => 'label',
+    ),
+    'access callback' => 'course_type_access',
+    'module' => 'kalvi_course',
+    // Enable the entity API's admin UI.
+    'admin ui' => array(
+      'path' => 'admin/kalvi/course_types',
+      'file' => 'course_type.admin.inc',
+      'controller class' => 'CourseTypeUIController',
+    ),
+  );
+
+  return $return;
+}
+
+
+/**
+ * Implements hook_entity_info_alter().
+ *
+ * We are adding the info about the course types via a hook to avoid a recursion
+ * issue as loading the course types requires the entity info as well.
+ *
+ * @todo This needs to be improved
+ */
+function kalvi_course_entity_info_alter(&$entity_info) {
+  foreach (course_get_types() as $type => $info) {
+    $entity_info['course']['bundles'][$type] = array(
+      'label' => $info->label,
+      'admin' => array(
+        'path' => 'admin/kalvi/course_types/manage/%course_type',
+        'real path' => 'admin/kalvi/course_types/manage/' . $type,
+        'bundle argument' => 4,
+        'access arguments' => array('administer course types'),
+      ),
+    );
+  }
+}
+
+
+/**
+ * Implements hook_permission().
+ */
+function kalvi_course_permission() {
+  // We set up permisssions to manage entity types, manage all entities and the
+  // permissions for each individual entity
+  $permissions = array(
+    'administer course types' => array(
+      'title' => t('Administer course types'),
+      'description' => t('Create and delete fields for course types, and set their permissions.'),
+    ),
+    'administer courses' => array(
+      'title' => t('Administer courses'),
+      'description' => t('Edit and delete all courses'),
+    ),
+  );
+
+  //Generate permissions per course
+  foreach (course_get_types() as $type) {
+    $type_name = check_plain($type->type);
+    $permissions += array(
+      "edit any $type_name course" => array(
+        'title' => t('%type_name: Edit any course', array('%type_name' => $type->label)),
+      ),
+      "view any $type_name course" => array(
+        'title' => t('%type_name: View any course', array('%type_name' => $type->label)),
+      ),
+    );
+  }
+  return $permissions;
+}
+
+/**
+* Implements hook_enable().
+*/
+function kalvi_course_enable() {
+  $bundle = new stdClass();
+  $bundle->type = 'course';
+  $bundle->label = t('Course');
+  $bundle->is_new = true;
+  $bundle->description = t("Barebones course.");
+
+  $controller = new CourseTypeController('course_type');
+  $controller->save($bundle);
+}
+
+/**
+ * Determines whether the given user has access to a course.
+ *
+ * @param $op
+ *   The operation being performed. One of 'view', 'update', 'create', 'delete'
+ *   or just 'edit' (being the same as 'create' or 'update').
+ * @param $course
+ *   Optionally a course or a course type to check access for. If nothing is
+ *   given, access for all courses is determined.
+ * @param $account
+ *   The user to check for. Leave it to NULL to check for the global user.
+ * @return boolean
+ *   Whether access is allowed or not.
+ */
+function course_access($op, $course = NULL, $account = NULL) {
+  if (user_access('administer courses', $account)) {
+    return TRUE;
+  }
+  if (isset($course) && $type_name = $course->type) {
+    $op = ($op == 'view') ? 'view' : 'edit';
+    if (user_access("$op any $type_name course", $account)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+
+/**
+ * Access callback for the entity API.
+ */
+function course_type_access($op, $type = NULL, $account = NULL) {
+  return user_access('administer course types', $account);
+}
+
+
+/**
+ * Gets an array of all course types, keyed by the type name.
+ *
+ * @param $type_name
+ *   If set, the type with the given name is returned.
+ * @return CourseType[]
+ *   Depending whether $type isset, an array of course types or a single one.
+ */
+function course_get_types($type_name = NULL) {
+  // entity_load will get the Entity controller for our course entity and call the load
+  // function of that object - we are loading entities by name here.
+  $types = entity_load_multiple_by_name('course_type', isset($type_name) ? array($type_name) : FALSE);
+  return isset($type_name) ? reset($types) : $types;
+}
+
+
+/**
+ * Menu argument loader; Load a course type by string.
+ *
+ * @param $type
+ *   The machine-readable name of a course type to load.
+ * @return
+ *   A course type array or FALSE if $type does not exist.
+ */
+function course_type_load($type) {
+  return course_get_types($type);
+}
+
+
+/**
+ * Fetch a course object. Make sure that the wildcard you choose
+ * in the course entity definition fits the function name here.
+ *
+ * @param $course_id
+ *   Integer specifying the course id.
+ * @param $reset
+ *   A boolean indicating that the internal cache should be reset.
+ * @return
+ *   A fully-loaded $course object or FALSE if it cannot be loaded.
+ *
+ * @see course_load_multiple()
+ */
+function course_load($course_id, $reset = FALSE) {
+  $courses = course_load_multiple(array($course_id), array(), $reset);
+  return reset($courses);
+}
+
+
+/**
+ * Load multiple courses based on certain conditions.
+ *
+ * @param $course_ids
+ *   An array of course IDs.
+ * @param $conditions
+ *   An array of conditions to match against the {course} table.
+ * @param $reset
+ *   A boolean indicating that the internal cache should be reset.
+ * @return
+ *   An array of course objects, indexed by course_id.
+ *
+ * @see entity_load()
+ * @see course_load()
+ */
+function course_load_multiple($course_ids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('course', $course_ids, $conditions, $reset);
+}
+
+
+/**
+ * Deletes a course.
+ */
+function course_delete(Course $course) {
+  $course->delete();
+}
+
+
+/**
+ * Delete multiple courses.
+ *
+ * @param $course_ids
+ *   An array of course IDs.
+ */
+function course_delete_multiple(array $course_ids) {
+  entity_get_controller('course')->delete($course_ids);
+}
+
+
+/**
+ * Create a course object.
+ */
+function course_create($values = array()) {
+  return entity_get_controller('course')->create($values);
+}
+
+
+/**
+ * Saves a course to the database.
+ *
+ * @param $course
+ *   The course object.
+ */
+function course_save(Course $course) {
+  return entity_get_controller('course')->save($course);
+}
+
+
+/**
+ * Saves a course type to the db.
+ */
+function course_type_save(CourseType $type) {
+  $type->save();
+}
+
+
+/**
+ * Deletes a course type from the db.
+ */
+function course_type_delete(CourseType $type) {
+  $type->delete();
+}
+
+
+/**
+ * URI callback for courses
+ */
+function course_uri(Course $course){
+  return array(
+    'path' => 'course/' . $course->course_id,
+  );
+}
+
+
+/**
+ * Menu title callback for showing individual entities
+ */
+function course_page_title(Course $course){
+  return $course->name;
+}
+
+
+/**
+ * Sets up content to show an individual course
+ * @todo - get rid of drupal_set_title();
+ */
+function course_page_view($course, $view_mode = 'full') {
+  $controller = entity_get_controller('course');
+  $content = $controller->view(array($course->course_id => $course));
+  drupal_set_title($course->name);
+  return $content;
+}
+
+
+
+/**
+ * Implements hook_views_api().
+ */
+function kalvi_course_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'kalvi_course') . '/views',
+  );
+}
+
+
+
+/**
+ * Implement hook_theme().
+ */
+function kalvi_course_theme() {
+  return array(
+    'course_add_list' => array(
+      'variables' => array('content' => array()),
+      'file' => 'course.admin.inc',
+    ),
+    'course' => array(
+      'render element' => 'elements',
+      'template' => 'course',
+    ),
+    'course_edit_form' => array(
+      'render element' => 'form',
+      'file' => 'course.admin.inc',
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ */
+function kalvi_course_menu_local_tasks_alter(&$data, $router_item, $root_path) {
+  // Add action link 'admin/kalvi/courses/add' on 'admin/kalvi/courses'.
+  if ($root_path == 'admin/kalvi/courses') {
+    $item = menu_get_item('admin/kalvi/courses/add');
+    if ($item['access']) {
+      $data['actions']['output'][] = array(
+        '#theme' => 'menu_local_action',
+        '#link' => $item,
+      );
+    }
+  }
+}
+
+
+/**
+ * Implements hook_field_info().
+ */
+function kalvi_course_field_info() {
+  return array(
+    'duration' => array(
+      'label' => t('Course Duration'),
+      'description' => t('Time settings for which the course will be available'),
+      'default_widget' => 'duration',
+      'default_formatter' => 'duration',
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_field_validate().
+ */
+function kalvi_course_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
+  foreach ($items as $delta => $item) {
+    if (!empty($item['interval'])) {
+      if (!is_numeric($item['interval'])) {
+        $errors[$field['field_name']][$langcode][$delta][] = array(
+          'error' => 'interval_non_numeric',
+          'message' => t('You must enter a numeric value.'),
+        );
+      }
+    }
+  }
+}
+
+
+/**
+ * Implements hook_field_is_empty().
+ */
+function kalvi_course_field_is_empty($item, $field) {
+  // TODO: add more logic here
+  if (empty($item['type'])) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+
+/**
+ * Implements hook_field_widget_info().
+ */
+function kalvi_course_field_widget_info() {
+  return array(
+    'duration' => array(
+      'label' => t('Course Duration'),
+      'description' => t('Time Duration window within which the course must be consumed by user'),
+      'field types' => array('duration'),
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function kalvi_course_field_formatter_info() {
+  return array(
+    'duration' => array(
+      'label' => t('Duration'),
+      'description' => t('Time Duration window within which the course must be consumed by user'),
+      'field types' => array('duration'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function kalvi_course_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  $value = isset($items[$delta]) ? $items[$delta] : array('type' => NULL, 'interval' => NULL, 'start_date' => NULL, 'end_date' => NULL);
+  $field_name = $instance['field_name'];
+
+  if (isset($form_state['values']) &&
+    !empty($form_state['values'][$field_name][$langcode][$delta])) {
+    $value = $form_state['values'][$field_name][$langcode][$delta];
+  }
+  $element['#default_value'] = $value;
+
+  $settings = $instance['settings'];
+  $widget = $instance['widget'];
+
+  $duration_options = array(
+    'fixed_duration' => t('Fixed duration from the time of enrolling, like 2 weeks or 36 days.'),
+    'fixed_duration_with_start_date' => t('Fixed duration from the time of enrolling, active only after a specific date'),
+    'duration_with_start_date_and_end_date' => t('Course available only in a specific time interval'),
+  );
+
+  $element['type'] = array(
+    '#type' => 'select',
+    '#options' => $duration_options,
+    '#default_value' => $value['type'],
+    '#required' => $element['#required'],
+  );
+
+
+  $element['interval'] = array(
+    '#title' => t('Course Availability Interval'),
+    '#type' => 'textfield',
+    '#default_value' => $value['interval'],
+    '#required' => $element['#required'],
+    '#description' => t('Time window for which the course will be active.'),
+    '#states' => array(
+      'invisible' => array(
+        '.field-type-duration select' => array('value' => 'duration_with_start_date_and_end_date'),
+      ),
+    ),
+  );
+
+  $element['start_date'] = array(
+    '#title' => t('Course Start Date'),
+    '#type' => 'date_popup',
+    '#date_format' => 'Y-m-d',
+    '#description' => t('Date at which the course will become active.'),
+    '#states' => array(
+      'invisible' => array(
+        '.field-type-duration select' => array('value' => 'fixed_duration'),
+      ),
+    ),
+  );
+
+  $element['end_date'] = array(
+    '#title' => t('Course End Date'),
+    '#type' => 'date_popup',
+    '#date_format' => 'Y-m-d',
+    '#description' => t('Date after which the course will become inactive.'),
+     '#states' => array(
+      'visible' => array(
+        '.field-type-duration select' => array('value' => 'duration_with_start_date_and_end_date'),
+      ),
+    ),
+ );
+
+  return $element;
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function kalvi_course_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+  switch ($display['type']) {
+    case 'duration':
+      foreach ($items as $delta => $item) {
+        $element[$delta] = array(
+          '#type' => 'html_tag',
+          '#attributes' => array('class' => array('duration-value')),
+          '#tag' => 'div',
+          '#value' => $item['type'] // TODO: add more meaningful information here
+        );
+      }
+      break;
+  }
+  return $element;
+}
+
+/**
+ * Implements hook_entity_insert().
+ */
+function kalvi_core_entity_insert($entity, $type) {
+  if ($type == 'relation') {
+    $relation_type = $entity->relation_type;
+    switch ($relation_type) {
+      case 'enrollment':
+        rules_invoke_event('kalvi_user_enrollment', $entity->endpoints[LANGUAGE_NONE][0]['entity_id'], $entity->endpoints[LANGUAGE_NONE][1]['entity_id']);
+        break;
+    }
+  }
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function kalvi_core_entity_delete($entity, $type) {
+  if ($type == 'relation') {
+    $relation_type = $entity->relation_type;
+    switch ($relation_type) {
+      case 'enrollment':
+        rules_invoke_event('kalvi_user_disenrollment', $entity->endpoints[LANGUAGE_NONE][0]['entity_id'], $entity->endpoints[LANGUAGE_NONE][1]['entity_id']);
+        break;
+    }
+  }
+}
+
+
+/**
+ * The class used for course entities
+ */
+class Course extends Entity {
+
+  public function __construct($values = array()) {
+    parent::__construct($values, 'course');
+  }
+
+  protected function defaultLabel() {
+    return $this->name;
+  }
+
+  protected function defaultUri() {
+    return array('path' => 'course/' . $this->course_id);
+  }
+
+
+}
+
+
+/**
+ * The class used for course type entities
+ */
+class CourseType extends Entity {
+
+  public $type;
+  public $label;
+
+  public function __construct($values = array()) {
+    parent::__construct($values, 'course_type');
+  }
+
+}
+
+
+/**
+ * The Controller for Course entities
+ */
+class CourseController extends EntityAPIController {
+  public function __construct($entityType) {
+    parent::__construct($entityType);
+  }
+
+
+  /**
+   * Create a course - we first set up the values that are specific
+   * to our course schema but then also go through the EntityAPIController
+   * function.
+   *
+   * @param $type
+   *   The machine-readable type of the course.
+   *
+   * @return
+   *   A course object with all default fields initialized.
+   */
+  public function create(array $values = array()) {
+    global $user;
+    // Add values that are specific to our Course
+    $values += array(
+      'course_id' => NULL,
+      'is_new' => TRUE,
+      'name' => '',
+      'created' => '',
+      'changed' => '',
+      'author' => $user->uid,
+    );
+
+    $course = parent::create($values);
+    return $course;
+  }
+
+  /**
+   * Overriding the buldContent function to add entity specific fields
+   */
+  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
+    $content = parent::buildContent($entity, $view_mode, $langcode, $content);
+    $content['author'] = array('#markup' => t('Created by: !author', array('!author' => user_load($entity->author)->name)));
+
+    return $content;
+  }
+}
+
+
+/**
+ * The Controller for Course entities
+ */
+class CourseTypeController extends EntityAPIControllerExportable {
+  public function __construct($entityType) {
+    parent::__construct($entityType);
+  }
+
+   /**
+   * Create a course type - we first set up the values that are specific
+   * to our course type schema but then also go through the EntityAPIController
+   * function.
+   *
+   * @param $type
+   *   The machine-readable type of the course.
+   *
+   * @return
+   *   A course type object with all default fields initialized.
+   */
+  public function create(array $values = array()) {
+    // Add values that are specific to our Course
+    $values += array(
+      'id' => '',
+      'is_new' => TRUE,
+    );
+    $course_type = parent::create($values);
+    return $course_type;
+  }
+
+}

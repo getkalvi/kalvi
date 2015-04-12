@@ -1,0 +1,299 @@
+@import "fontawesome";
+
+
+// admin/structure
+.path-admin-structure span.icon {
+  @include icon-before($icon-sitemap);
+}
+
+.path-admin-structure-block span.icon {
+  @include icon-before($icon-cubes);
+}
+
+.path-admin-structure-types span.icon {
+  @include icon-before($icon-file-text-o);
+}
+
+.path-admin-structure-defaultconfig span.icon {
+  @include icon-before($icon-cogs);
+}
+
+.path-admin-structure-features span.icon {
+  @include icon-before($icon-file-code-o);
+}
+
+.path-admin-structure-menu span.icon {
+  @include icon-before($icon-list);
+}
+
+.path-admin-structure-panels span.icon {
+  @include icon-before($icon-th-large);
+}
+
+.path-admin-structure-views span.icon {
+  @include icon-before($icon-binoculars);
+}
+
+.path-admin-structure-taxonomy span.icon {
+  @include icon-before($icon-tags);
+}
+
+.path-admin-structure-relation span.icon {
+  @include icon-before($icon-random);
+}
+
+.path-admin-structure-entityqueue span.icon {
+  @include icon-before($icon-list-ol);
+}
+
+.path-admin-structure-mini-panels span.icon {
+  @include icon-before($icon-th);
+}
+
+.path-admin-structure-pages span.icon {
+  @include icon-before($icon-file-o);
+}
+
+
+// admin/config
+
+.path-admin-config span.icon {
+  @include icon-before($icon-wrench);
+}
+
+// people
+.path-admin-config-people span.icon {
+  @include icon-before($icon-group);
+}
+
+.path-admin-config-people-accounts span.icon {
+  @include icon-before($icon-unlock-alt);
+}
+
+.path-admin-config-people-ip-blocking span.icon {
+  @include icon-before($icon-ban);
+}
+
+.path-admin-config-people-user-picture-field span.icon {
+  @include icon-before($icon-camera);
+}
+
+// content authoring
+.path-admin-config-content span.icon {
+  @include icon-before($icon-pencil-square-o);
+}
+
+.path-admin-config-content-panelizer span.icon {
+  @include icon-before($icon-qrcode);
+}
+
+.path-admin-config-content-formats span.icon {
+  @include icon-before($icon-indent);
+}
+
+.path-admin-config-content-wysiwyg span.icon {
+  @include icon-before($icon-paragraph);
+}
+
+// date
+.path-admin-config-date span.icon {
+  @include icon-before($icon-calendar);
+}
+
+
+// media
+.path-admin-config-media span.icon {
+  @include icon-before($icon-file-image-o);
+}
+
+.path-admin-config-media-file-system span.icon {
+  @include icon-before($icon-folder-o);
+}
+
+.path-admin-config-media-image-styles span.icon {
+  @include icon-before($icon-crop);
+}
+
+.path-admin-config-media-browser span.icon {
+  @include icon-before($icon-film);
+}
+
+// admin/config/search
+.path-admin-config-search span.icon {
+  @include icon-before($icon-search);
+}
+
+.path-admin-config-search-clean-urls span.icon {
+  @include icon-before($icon-eraser);
+}
+
+.path-admin-config-search-path span.icon {
+  @include icon-before($icon-link);
+}
+
+.path-admin-config-search-search-api span.icon {
+  @include icon-before($icon-code-fork);
+}
+
+
+// admin/config/regional
+.path-admin-config-regional span.icon {
+  @include icon-before($icon-globe);
+}
+
+.path-admin-config-regional-settings span.icon {
+  @include icon-before($icon-language);
+}
+
+// admin/config/system
+.path-admin-config-system span.icon {
+  @include icon-before($icon-cogs);
+}
+
+.path-admin-config-system-site-information span.icon {
+  @include icon-before($icon-info);
+}
+
+.path-admin-config-system-actions span.icon {
+  @include icon-before($icon-play-circle-o);
+}
+
+.path-admin-config-system-apps span.icon {
+  @include icon-before($icon-puzzle-piece);
+}
+
+.path-admin-config-system-cron span.icon {
+  @include icon-before($icon-clock-o);
+}
+
+// admin/config/user-interface
+.path-admin-config-user-interface span.icon {
+  @include icon-before($icon-eye);
+}
+
+.path-admin-config-user-interface-menu-block span.icon {
+  @include icon-before($icon-reorder);
+}
+
+.path-admin-config-user-interface-shortcut span.icon {
+  @include icon-before($icon-random);
+}
+
+// admin/config/development
+.path-admin-config-development span.icon {
+  @include icon-before($icon-code);
+}
+
+.path-admin-config-development-performance span.icon {
+  @include icon-before($icon-rocket);
+}
+
+.path-admin-config-development-logging span.icon {
+  @include icon-before($icon-bomb);
+}
+
+.path-admin-config-development-logging span.icon {
+  @include icon-before($icon-bomb);
+}
+
+.path-admin-config-development-logging span.icon {
+  @include icon-before($icon-bomb);
+}
+
+.path-admin-config-development-maintenance span.icon {
+  @include icon-before($icon-off);
+}
+
+.path-admin-config-development-strongarm span.icon {
+  @include icon-before($icon-sliders);
+}
+
+
+// admin/config/services
+.path-admin-config-services span.icon {
+  @include icon-before($icon-birthday-cake);
+}
+
+.path-admin-config-services-rss-publishing span.icon {
+  @include icon-before($icon-rss);
+}
+
+
+// admin/panopoly
+
+.path-admin-panopoly span.icon {
+  @include icon-before($icon-magic);
+}
+
+// admin/kalvi
+
+.path-admin-kalvi span.icon {
+  @include icon-before($icon-graduation-cap);
+}
+
+// admin/content
+
+.path-admin-content span.icon {
+  @include icon-before($icon-newspaper-o);
+}
+
+// admin/help
+
+.path-admin-help span.icon {
+  @include icon-before($icon-question-sign);
+}
+
+// admin/apps
+
+.path-admin-apps span.icon {
+  @include icon-before($icon-puzzle-piece);
+}
+
+// admin/reports
+
+.path-admin-reports span.icon {
+  @include icon-before($icon-line-chart);
+}
+
+.path-admin-reports-updates span.icon {
+  @include icon-before($icon-cloud-download);
+}
+
+.path-admin-reports-fields span.icon {
+  @include icon-before($icon-reorder);
+}
+
+.path-admin-reports-search span.icon {
+  @include icon-before($icon-search);
+}
+
+.path-admin-reports-dblog span.icon {
+  @include icon-before($icon-database);
+}
+
+.path-admin-reports-access-denied span.icon {
+  @include icon-before($icon-sort-amount-desc);
+}
+
+.path-admin-reports-page-not-found span.icon {
+  @include icon-before($icon-sort-amount-desc);
+}
+
+
+// admin/appearance
+
+.path-admin-appearance span.icon {
+  @include icon-before($icon-paint-brush);
+}
+
+// admin/modules
+
+.path-admin-modules span.icon {
+  @include icon-before($icon-plug);
+}
+
+// admin/people
+
+.path-admin-people span.icon {
+  @include icon-before($icon-group);
+}

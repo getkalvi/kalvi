@@ -1,0 +1,22 @@
+name = session
+description = course components entity for Kalvi LMS
+package = Kalvi
+core = 7.x
+
+dependencies[] = kalvi_core
+
+files[] = session.admin.inc
+files[] = session_type.admin.inc
+files[] = session.inc
+
+files[] = views/session_handler_link_field.inc
+files[] = views/session_handler_delete_link_field.inc
+files[] = views/session_handler_edit_link_field.inc
+files[] = views/session_handler_session_operations_field.inc
+
+; Information added by Drupal.org packaging script on 2015-01-11
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "kalvi_core"
+datestamp = "1420938183"
+
